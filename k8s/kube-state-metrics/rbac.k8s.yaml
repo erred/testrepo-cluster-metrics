@@ -1,0 +1,223 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+  name: kube-state-metrics
+---
+# TODO: replace with default?
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: "runtime/default"
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: "runtime/default"
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: "runtime/default"
+    apparmor.security.beta.kubernetes.io/defaultProfileName: "runtime/default"
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+  name: kube-state-metrics
+spec:
+  # # user
+  runAsGroup:
+    rule: "MustRunAs"
+    ranges:
+      - min: 1
+        max: 65535
+  runAsUser:
+    rule: "MustRunAsNonRoot"
+  fsGroup:
+    rule: "MustRunAs"
+    ranges:
+      - min: 1
+        max: 65535
+  supplementalGroups:
+    rule: "MustRunAs"
+    ranges:
+      - min: 1
+        max: 65535
+  # # privilege
+  privileged: false
+  allowPrivilegeEscalation: false
+  defaultAllowPrivilegeEscalation: false
+  # # host
+  hostIPC: false
+  hostNetwork: false
+  hostPID: false
+  hostPorts: []
+  # allowedHostPaths: []
+  # allowedProcMountTypes: []
+  # allowedUnsafeSysctls: []
+  # forbiddenSysctls: []
+  seLinux:
+    rule: "RunAsAny"
+  # # capabilities
+  # allowedCapabilities:
+  # defaultAddCapabilities:
+  requiredDropCapabilities:
+    - ALL
+  # # filesystem
+  readOnlyRootFilesystem: false
+  volumes: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+  name: kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-state-metrics
+subjects:
+  - kind: ServiceAccount
+    name: kube-state-metrics
+    namespace: kube-state-metrics
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+  name: kube-state-metrics
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - secrets
+      - nodes
+      - pods
+      - services
+      - resourcequotas
+      - replicationcontrollers
+      - limitranges
+      - persistentvolumeclaims
+      - persistentvolumes
+      - namespaces
+      - endpoints
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+      - daemonsets
+      - deployments
+      - replicasets
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - batch
+    resources:
+      - cronjobs
+      - jobs
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - autoscaling
+    resources:
+      - horizontalpodautoscalers
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+  - apiGroups:
+      - policy
+    resources:
+      - poddisruptionbudgets
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - certificates.k8s.io
+    resources:
+      - certificatesigningrequests
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - storageclasses
+      - volumeattachments
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - networkpolicies
+      - ingresses
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+  name: kube-state-metrics
+rules:
+  - apiGroups:
+      - policy
+    resources:
+      - podsecuritypolicies
+    verbs:
+      - use
+    resourceNames:
+      - kube-state-metrics
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+  name: kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kube-state-metrics
+subjects:
+  - kind: ServiceAccount
+    name: kube-state-metrics

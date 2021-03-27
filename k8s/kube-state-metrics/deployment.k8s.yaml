@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-state-metrics
+    spec:
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: kube-state-metrics
+      containers:
+        - name: kube-state-metrics
+          image: k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.0.0-rc.0
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080

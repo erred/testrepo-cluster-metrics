@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonLabels:
+  app.kubernetes.io/name: node-exporter
+namespace: node-exporter
+resources:
+  - daemonset.k8s.yaml
+  - namespace.k8s.yaml
+  - rbac.k8s.yaml
+  - service.k8s.yaml
